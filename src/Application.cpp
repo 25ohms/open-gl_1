@@ -6,6 +6,30 @@
 #include <sstream>
 
 
+#define ASSERT(x) if (!(x)) __builtin_trap()
+#define GLCall(x) GLClearError();\
+    x;\
+    ASSERT(GLLogCall(#x, __FILE__, __LINE__))
+
+static void GLClearError()
+{
+    while(glGetError() != GL_NO_ERROR);  
+}
+
+
+static bool GLLogCall(const char* function, const char* file, int line)
+{
+    while(GLenum error = glGetError())
+    {
+        std::cout << "[OpenGL Error]" << "(";
+        std::cout << std::hex << error;
+        std::cout << ")" << function << " " << file << ":" << line << std::endl;
+        return false;
+    }
+    return true;
+}
+
+
 struct shaderProgramSource
 {
     std::string vertexSource;
@@ -104,7 +128,7 @@ int main(void)
         return -1;
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(840, 480, "Hello World", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -126,19 +150,30 @@ int main(void)
 
     /* Defining a buffer */
 
-    float positions[6] = {
-       -0.5f, -0.5f,
-        0.0f,  0.5f,
-        0.5f, -0.5f
+    float positions[] = {
+       -0.5f, -0.5f,  // 0
+        0.5f,  -0.5f, // 1
+        0.5f, 0.5f,   // 2
+        -0.5f, 0.5f   // 3
+    };
+
+    unsigned int indices[] = {
+      0, 1, 2,
+      2, 3, 0
     };
 
     unsigned int buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer); // we need to bind the buffer before specifying anything else
-    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), positions, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), positions, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0); // specifies to C++ the structure of vertices
+
+    unsigned int ibo; // ibo: index buffer object
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo); // we need to bind the buffer before specifying anything else
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 
     shaderProgramSource source = parseShader("res/shaders/Basic.shader");
 
@@ -156,7 +191,7 @@ int main(void)
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
