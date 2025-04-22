@@ -127,6 +127,10 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+    /*glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);*/
+    /*glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);*/
+    /*glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);*/
+
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(840, 480, "Hello World", NULL, NULL);
     if (!window)
@@ -138,6 +142,8 @@ int main(void)
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
+    glfwSwapInterval(1);
+
     if (glewInit() != GLEW_OK) {
       std::cout << "Error!" << std::endl; 
     } else {
@@ -147,6 +153,10 @@ int main(void)
     // checking versions
     std::cout << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    
+    /* checking to see if extensions are available*/
+    GLCall(std::string ext = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
+    /*std::cout << ext << std::endl;*/
 
     /* Defining a buffer */
 
@@ -162,10 +172,14 @@ int main(void)
       2, 3, 0
     };
 
+    unsigned int vao;
+    GLCall(glGenVertexArraysAPPLE(1, &vao));
+    GLCall(glBindVertexArrayAPPLE(vao));
+
     unsigned int buffer;
     GLCall(glGenBuffers(1, &buffer));
     GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer)); // we need to bind the buffer before specifying anything else
-    GLCall(glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), positions, GL_STATIC_DRAW));
+    GLCall(glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), positions, GL_STATIC_DRAW));
 
     GLCall(glEnableVertexAttribArray(0));
     GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0)); // specifies to C++ the structure of vertices
@@ -177,21 +191,47 @@ int main(void)
 
     shaderProgramSource source = parseShader("res/shaders/Basic.shader");
 
-    /*std::cout << "VERTEX" << std::endl;*/
-    /*std::cout << source.vertexSource << std::endl;*/
-    /*std::cout << "FRAGMENT" << std::endl;*/
-    /*std::cout << source.fragmentSource << std::endl;*/
-
     GLCall(unsigned int shader = CreateShader(source.vertexSource, source.fragmentSource));
-    GLCall(glUseProgram(shader)); // 3. Lookup and enable attribute
+    GLCall(glUseProgram(shader));
+
+    GLCall(int location = glGetUniformLocation(shader, "u_Color"));
+    ASSERT(location != -1);
+    GLCall(glUniform4f(location, 0.2f, 0.3f, 0.8f, 1.0f));
+
+    /* assume we unbind everything */
+    GLCall(glBindVertexArrayAPPLE(0));
+    GLCall(glUseProgram(0));
+    GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
     
+    float r = 0.0f;
+    float increment = 0.05f;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
         GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
+        /* Rebind everything */
+        GLCall(glUseProgram(shader));
+        GLCall(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
+
+        /*GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer)); // we need to bind the buffer before specifying anything else */
+        /*GLCall(glEnableVertexAttribArray(0));*/
+        /*GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));*/
+
+        GLCall(glBindVertexArrayAPPLE(vao));
+        GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo)); // we need to bind the buffer before specifying anything else
+        /* Once everything is rebound, we can draw */
+
         GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+
+        if (r > 1.0f)
+          increment = -0.05f;
+        else if (r < 0.0f)
+          increment = 0.05f;
+
+        r += increment;
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
