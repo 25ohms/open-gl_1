@@ -6,6 +6,44 @@
 #include <sstream>
 
 
+struct shaderProgramSource
+{
+    std::string vertexSource;
+    std::string fragmentSource;
+};
+
+
+static shaderProgramSource parseShader(const std::string& filePath)
+{
+    std::ifstream stream(filePath);
+
+    enum class shaderType
+    {
+        NONE = -1, VERTEX = 0, FRAGMENT = 1
+    };
+
+    std::string line;
+    std::stringstream ss[2];
+    shaderType type = shaderType::NONE;
+    while(getline(stream, line))
+    {
+        if (line.find("#shader") != std::string::npos)
+        {
+            if (line.find("vertex") != std::string::npos)
+                type = shaderType::VERTEX;
+            else if (line.find("fragment") != std::string::npos)
+                type = shaderType::FRAGMENT;
+        }
+        else
+        {
+            ss[(int)type] << line << '\n';
+        }
+    }
+
+    return { ss[0].str(), ss[1].str() };
+}
+
+
 static unsigned int CompileShader(unsigned int type, const std::string& source)
 {
     
@@ -55,23 +93,6 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
 }
 
 
-std::string readFileToString(const std::string& filePath)
-{
-  std::ifstream fileStream(filePath);
-
-  if(!fileStream)
-  {
-    std::cout << "Unable to open file" << std::endl;
-    return "";
-  }
-
-  std::stringstream fileBuffer;
-  fileBuffer << fileStream.rdbuf();
-
-  return fileBuffer.str();
-}
-
-
 
 int main(void)
 {
@@ -81,14 +102,6 @@ int main(void)
     /* Initialize the library */
     if (!glfwInit())
         return -1;
-
-    
-
-    /*glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);*/
-    /*glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);*/
-    /*glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);*/
-    /*glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Required on macOS*/
-
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
@@ -127,11 +140,15 @@ int main(void)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0); // specifies to C++ the structure of vertices
 
-    std::string vertexShader = readFileToString("shaders/vertexShader.txt");
-    std::string fragmentShader = readFileToString("shaders/fragmentShader.txt");
+    shaderProgramSource source = parseShader("res/shaders/Basic.shader");
 
-    unsigned int shader = CreateShader(vertexShader, fragmentShader);
-    glUseProgram(shader);// 3. Lookup and enable attribute
+    /*std::cout << "VERTEX" << std::endl;*/
+    /*std::cout << source.vertexSource << std::endl;*/
+    /*std::cout << "FRAGMENT" << std::endl;*/
+    /*std::cout << source.fragmentSource << std::endl;*/
+
+    unsigned int shader = CreateShader(source.vertexSource, source.fragmentSource);
+    glUseProgram(shader); // 3. Lookup and enable attribute
     
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
