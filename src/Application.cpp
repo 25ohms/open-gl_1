@@ -5,10 +5,10 @@
 #include <fstream>
 #include <sstream>
 
-#include "../include/Renderer.h"
+#include "Renderer.h"
 
-#include "../include/VertexBuffer.h"
-#include "../include/IndexBuffer.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
 
 
 struct shaderProgramSource
@@ -141,77 +141,79 @@ int main(void)
 
     /* Defining a buffer */
 
-    float positions[] = {
-       -0.5f, -0.5f,  // 0
-        0.5f,  -0.5f, // 1
-        0.5f, 0.5f,   // 2
-        -0.5f, 0.5f   // 3
-    };
+      {
+          float positions[] = {
+            -0.5f, -0.5f,  // 0
+              0.5f,  -0.5f, // 1
+              0.5f, 0.5f,   // 2
+              -0.5f, 0.5f   // 3
+          };
 
-    unsigned int indices[] = {
-      0, 1, 2,
-      2, 3, 0
-    };
+          unsigned int indices[] = {
+            0, 1, 2,
+            2, 3, 0
+          };
 
-    unsigned int vao;
-    GLCall(glGenVertexArraysAPPLE(1, &vao));
-    GLCall(glBindVertexArrayAPPLE(vao));
+          unsigned int vao;
+          GLCall(glGenVertexArraysAPPLE(1, &vao));
+          GLCall(glBindVertexArrayAPPLE(vao));
 
-    VertexBuffer vb(positions, 4 * 2 * sizeof(float));
+          VertexBuffer vb(positions, 4 * 2 * sizeof(float));
 
-    GLCall(glEnableVertexAttribArray(0));
-    GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0)); // specifies to C++ the structure of vertices
+          GLCall(glEnableVertexAttribArray(0));
+          GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0)); // specifies to C++ the structure of vertices
 
-    IndexBuffer ib(indices, 6);
+          IndexBuffer ib(indices, 6);
 
-    shaderProgramSource source = parseShader("res/shaders/Basic.shader");
-    unsigned int shader = CreateShader(source.vertexSource, source.fragmentSource);
-    GLCall(glUseProgram(shader));
+          shaderProgramSource source = parseShader("res/shaders/Basic.shader");
+          unsigned int shader = CreateShader(source.vertexSource, source.fragmentSource);
+          GLCall(glUseProgram(shader));
 
-    GLCall(int location = glGetUniformLocation(shader, "u_Color"));
-    ASSERT(location != -1);
-    GLCall(glUniform4f(location, 0.2f, 0.3f, 0.8f, 1.0f));
+          GLCall(int location = glGetUniformLocation(shader, "u_Color"));
+          ASSERT(location != -1);
+          GLCall(glUniform4f(location, 0.2f, 0.3f, 0.8f, 1.0f));
 
-    /* assume we unbind everything */
-    GLCall(glBindVertexArrayAPPLE(0));
-    GLCall(glUseProgram(0));
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
-    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-    
-    float r = 0.0f;
-    float increment = 0.05f;
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-        GLCall(glClear(GL_COLOR_BUFFER_BIT));
+          /* assume we unbind everything */
+          GLCall(glBindVertexArrayAPPLE(0));
+          GLCall(glUseProgram(0));
+          GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
+          GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+          
+          float r = 0.0f;
+          float increment = 0.05f;
+          /* Loop until the user closes the window */
+          while (!glfwWindowShouldClose(window))
+          {
+              /* Render here */
+              GLCall(glClear(GL_COLOR_BUFFER_BIT));
 
-        /* Rebind everything */
-        GLCall(glUseProgram(shader));
-        GLCall(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
+              /* Rebind everything */
+              GLCall(glUseProgram(shader));
+              GLCall(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
 
-        GLCall(glBindVertexArrayAPPLE(vao));
-        ib.bind();
-        /* Once everything is rebound, we can draw */
+              GLCall(glBindVertexArrayAPPLE(vao));
+              ib.bind();
+              /* Once everything is rebound, we can draw */
 
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+              GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
-        if (r > 1.0f)
-          increment = -0.05f;
-        else if (r < 0.0f)
-          increment = 0.05f;
+              if (r > 1.0f)
+                increment = -0.05f;
+            else if (r < 0.0f)
+              increment = 0.05f;
 
-        r += increment;
+            r += increment;
 
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
+            /* Swap front and back buffers */
+            glfwSwapBuffers(window);
 
-        /* Poll for and process events */
-        glfwPollEvents();
+            /* Poll for and process events */
+            glfwPollEvents();
+        }
+
+        GLCall(glDeleteProgram(shader));
     }
-
-    GLCall(glDeleteProgram(shader));
-
+    // delete buffers
     glfwTerminate();
     return 0;
 }

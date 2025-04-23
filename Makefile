@@ -1,5 +1,12 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -g -Iinclude -Idependencies/GLEW/include -Idependencies/GLFW/include
+BUILD_MODE ?= release
+
+ifeq ($(BUILD_MODE),debug)
+	CXXFLAGS := -std=c++17 -Wall -Wextra -O0 -g -Iinclude -Idependencies/GLEW/include -Idependencies/GLFW/include
+else
+	CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -Iinclude -Idependencies/GLEW/include -Idependencies/GLFW/include
+endif
+
 LDFLAGS := -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
 
 SRC_DIR := src
@@ -11,20 +18,21 @@ OBJS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
 
 TARGET := app
 
-.PHONY: all clean
+.PHONY: all clean debug release
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(OBJS) -o $@ $(LDFLAGS) dependencies/GLEW/lib/libGLEW.a -Ldependencies/GLFW/lib-arm64 -lglfw3
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $@ $(LDFLAGS) dependencies/GLEW/lib/libGLEW.a -Ldependencies/GLFW/lib-arm64 -lglfw3
 
-# Rule to compile .cpp to .o into obj/
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Ensure obj directory exists
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
+
+debug:
+	$(MAKE) BUILD_MODE=debug
 
 clean:
 	rm -rf $(OBJ_DIR) $(TARGET)
