@@ -48,7 +48,7 @@ class VertexBufferLayout {
     }
 
     // should this be returning const &?
-    inline const std::vector<VertexBufferElement> getElements() const { return m_Elements; }
+    inline const std::vector<VertexBufferElement> &getElements() const { return m_Elements; }
     inline unsigned int getStride() const { return m_Stride; }
 };
 
