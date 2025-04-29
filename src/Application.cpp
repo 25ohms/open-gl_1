@@ -8,13 +8,13 @@
 #include "Renderer.h"
 
 #include "VertexBuffer.h"
+#include "VertexBufferLayout.h"
 #include "IndexBuffer.h"
 #include "VertexArray.h"
 #include "Shader.h"
 
 
-int main(void)
-{
+int main(void) {
   glewExperimental = GL_TRUE;
   GLFWwindow* window;
 
@@ -28,8 +28,7 @@ int main(void)
 
   /* Create a windowed mode window and its OpenGL context */
   window = glfwCreateWindow(840, 480, "ohms", NULL, NULL);
-  if (!window)
-  {
+  if (!window) {
     glfwTerminate();
     return -1;
   }
@@ -68,10 +67,6 @@ int main(void)
       2, 3, 0
     };
 
-    /*unsigned int vao;*/
-    /*GLCall(glGenVertexArraysAPPLE(1, &vao));*/
-    /*GLCall(glBindVertexArrayAPPLE(vao));*/
-
     /* tentative */
     VertexArray va;
     VertexBuffer vb(positions, 4 * 2 * sizeof(float)); // NOT TENTATIVE
@@ -91,24 +86,22 @@ int main(void)
     vb.unBind();
     ib.unBind();
     shader.unBind();
+
+    Renderer renderer;
     
     float r = 0.0f;
     float increment = 0.05f;
     /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
       /* Render here */
-      GLCall(glClear(GL_COLOR_BUFFER_BIT));
+      renderer.clear();
 
       /* Rebind everything */
       shader.bind();
       shader.setUniform4f("u_Color", r, 0.3f, 0.8f, 1.0f);
 
-      va.bind();
-      ib.bind();
       /* Once everything is rebound, we can draw */
-
-      GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+      renderer.draw(va, ib, shader);
 
       if (r > 1.0f)
         increment = -0.05f;
