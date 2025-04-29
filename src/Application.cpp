@@ -9,6 +9,7 @@
 
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "VertexArray.h"
 
 
 struct shaderProgramSource
@@ -111,7 +112,7 @@ int main(void)
   /*glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);*/
 
   /* Create a windowed mode window and its OpenGL context */
-  window = glfwCreateWindow(840, 480, "Hello World", NULL, NULL);
+  window = glfwCreateWindow(840, 480, "ohms", NULL, NULL);
   if (!window)
   {
     glfwTerminate();
@@ -152,14 +153,20 @@ int main(void)
       2, 3, 0
     };
 
-    unsigned int vao;
-    GLCall(glGenVertexArraysAPPLE(1, &vao));
-    GLCall(glBindVertexArrayAPPLE(vao));
+    /*unsigned int vao;*/
+    /*GLCall(glGenVertexArraysAPPLE(1, &vao));*/
+    /*GLCall(glBindVertexArrayAPPLE(vao));*/
 
-    VertexBuffer vb(positions, 4 * 2 * sizeof(float));
+    /* tentative */
+    VertexArray va;
+    VertexBuffer vb(positions, 4 * 2 * sizeof(float)); // NOT TENTATIVE
 
-    GLCall(glEnableVertexAttribArray(0));
-    GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0)); // specifies to C++ the structure of vertices
+    VertexBufferLayout layout;
+    layout.push<float>(2);
+    va.addBuffer(vb, layout);
+
+    /*GLCall(glEnableVertexAttribArray(0));*/
+    /*GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0)); // specifies to C++ the structure of vertices*/
 
     IndexBuffer ib(indices, 6);
 
@@ -172,10 +179,10 @@ int main(void)
     GLCall(glUniform4f(location, 0.2f, 0.3f, 0.8f, 1.0f));
 
     /* assume we unbind everything */
-    GLCall(glBindVertexArrayAPPLE(0));
-    GLCall(glUseProgram(0));
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
-    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+    /*GLCall(glBindVertexArrayAPPLE(0));*/
+    /*GLCall(glUseProgram(0));*/
+    /*GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));*/
+    /*GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));*/
     
     float r = 0.0f;
     float increment = 0.05f;
@@ -189,7 +196,7 @@ int main(void)
       GLCall(glUseProgram(shader));
       GLCall(glUniform4f(location, r, 0.3f, 0.8f, 1.0f));
 
-      GLCall(glBindVertexArrayAPPLE(vao));
+      va.bind();
       ib.bind();
       /* Once everything is rebound, we can draw */
 
